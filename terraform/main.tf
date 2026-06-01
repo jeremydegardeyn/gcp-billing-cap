@@ -139,7 +139,7 @@ resource "google_billing_budget" "cap" {
     threshold_percent = 0.5
   }
   threshold_rules {
-    threshold_percent = 0.9
+    threshold_percent = 0.8
   }
   threshold_rules {
     threshold_percent = 1.0
