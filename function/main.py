@@ -7,13 +7,18 @@ Triggered by a Pub/Sub message from a GCP Budget alert.
 import base64
 import json
 import os
+import smtplib
+from email.mime.text import MIMEText
 
 import googleapiclient.discovery
 from google.auth import default
 
 PROJECT_ID = os.environ["GCP_PROJECT_ID"]
-# Fraction of budget at which to kill billing (1.0 = 100%)
 THRESHOLD_FRACTION = float(os.environ.get("THRESHOLD_FRACTION", "1.0"))
+
+ALERT_EMAIL_TO = os.environ.get("ALERT_EMAIL_TO", "")
+ALERT_EMAIL_FROM = os.environ.get("ALERT_EMAIL_FROM", "")
+ALERT_EMAIL_PASSWORD = os.environ.get("ALERT_EMAIL_PASSWORD", "")
 
 
 def disable_billing(event=None, context=None):
@@ -45,6 +50,8 @@ def disable_billing(event=None, context=None):
     _set_billing_disabled()
     print("Billing disabled successfully")
 
+    _send_alert_email(cost_amount, budget_amount)
+
 
 def _parse_event(event):
     try:
@@ -72,3 +79,33 @@ def _set_billing_disabled():
     client.projects().updateBillingInfo(
         name=f"projects/{PROJECT_ID}", body={"billingAccountName": ""}
     ).execute()
+
+
+def _send_alert_email(cost_amount: float, budget_amount: float):
+    if not all([ALERT_EMAIL_TO, ALERT_EMAIL_FROM, ALERT_EMAIL_PASSWORD]):
+        print("Email env vars not set — skipping notification")
+        return
+
+    subject = f"[GCP BILLING DISABLED] {PROJECT_ID} exceeded ${budget_amount:.2f} budget"
+    body = (
+        f"GCP billing has been automatically disabled for project: {PROJECT_ID}\n\n"
+        f"Spend:  ${cost_amount:.2f}\n"
+        f"Budget: ${budget_amount:.2f}\n\n"
+        f"All GCP services on this project are now stopped.\n"
+        f"To restore service, re-attach the billing account in the GCP console:\n"
+        f"https://console.cloud.google.com/billing/projects\n"
+    )
+
+    msg = MIMEText(body)
+    msg["Subject"] = subject
+    msg["From"] = ALERT_EMAIL_FROM
+    msg["To"] = ALERT_EMAIL_TO
+
+    try:
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+            server.login(ALERT_EMAIL_FROM, ALERT_EMAIL_PASSWORD)
+            server.sendmail(ALERT_EMAIL_FROM, [ALERT_EMAIL_TO], msg.as_string())
+        print(f"Alert email sent to {ALERT_EMAIL_TO}")
+    except Exception as exc:
+        # Don't let email failure prevent the billing disable from being recorded
+        print(f"Failed to send alert email: {exc}")

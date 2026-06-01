@@ -29,11 +29,30 @@ resource "google_service_account" "billing_cap" {
   display_name = "Billing Cap Cloud Function"
 }
 
-# Project Billing Manager lets the SA disable billing on this project
 resource "google_project_iam_member" "billing_cap_manager" {
   project = var.project_id
   role    = "roles/billing.projectManager"
   member  = "serviceAccount:${google_service_account.billing_cap.email}"
+}
+
+resource "google_project_iam_member" "billing_cap_secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+  member  = "serviceAccount:${google_service_account.billing_cap.email}"
+}
+
+# ── Secret Manager: Gmail app password ───────────────────────────────────────
+
+resource "google_secret_manager_secret" "gmail_password" {
+  secret_id = "billing-cap-gmail-password"
+  replication {
+    auto {}
+  }
+}
+
+resource "google_secret_manager_secret_version" "gmail_password" {
+  secret      = google_secret_manager_secret.gmail_password.id
+  secret_data = var.alert_email_password
 }
 
 # ── Cloud Function (2nd gen) ─────────────────────────────────────────────────
@@ -80,6 +99,14 @@ resource "google_cloudfunctions2_function" "billing_cap" {
     environment_variables = {
       GCP_PROJECT_ID     = var.project_id
       THRESHOLD_FRACTION = tostring(var.threshold_fraction)
+      ALERT_EMAIL_TO     = var.alert_email_to
+      ALERT_EMAIL_FROM   = var.alert_email_from
+    }
+    secret_environment_variables {
+      key        = "ALERT_EMAIL_PASSWORD"
+      project_id = var.project_id
+      secret     = google_secret_manager_secret.gmail_password.secret_id
+      version    = "latest"
     }
   }
 
@@ -108,7 +135,6 @@ resource "google_billing_budget" "cap" {
     }
   }
 
-  # Alert at 50%, 90%, and 100% of budget
   threshold_rules {
     threshold_percent = 0.5
   }
@@ -121,8 +147,7 @@ resource "google_billing_budget" "cap" {
   }
 
   all_updates_rule {
-    pubsub_topic = google_pubsub_topic.billing_cap.id
-    # Disable the default email alerts since we're using Pub/Sub
+    pubsub_topic                   = google_pubsub_topic.billing_cap.id
     disable_default_iam_recipients = false
   }
 }

@@ -1,5 +1,8 @@
-project_id         = "your-gcp-project-id"
-billing_account_id = "XXXXXX-XXXXXX-XXXXXX"
-region             = "us-central1"
-monthly_budget_usd = 50
-threshold_fraction = 1.0
+project_id           = "your-gcp-project-id"
+billing_account_id   = "XXXXXX-XXXXXX-XXXXXX"
+region               = "us-central1"
+monthly_budget_usd   = 50
+threshold_fraction   = 1.0
+alert_email_to       = "you@example.com"
+alert_email_from     = "your-gmail@gmail.com"
+alert_email_password = "xxxx xxxx xxxx xxxx"   # Gmail app password

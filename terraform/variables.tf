@@ -4,7 +4,7 @@ variable "project_id" {
 }
 
 variable "billing_account_id" {
-  description = "GCP billing account ID (find it in Billing > Account overview)"
+  description = "GCP billing account ID (Billing > Account overview, format: XXXXXX-XXXXXX-XXXXXX)"
   type        = string
 }
 
@@ -15,7 +15,7 @@ variable "region" {
 }
 
 variable "monthly_budget_usd" {
-  description = "Monthly spend cap in USD — billing is killed at threshold_fraction of this"
+  description = "Monthly spend cap in USD"
   type        = number
 }
 
@@ -23,4 +23,20 @@ variable "threshold_fraction" {
   description = "Fraction of budget at which billing is disabled (1.0 = 100%)"
   type        = number
   default     = 1.0
+}
+
+variable "alert_email_to" {
+  description = "Email address to notify when billing is disabled"
+  type        = string
+}
+
+variable "alert_email_from" {
+  description = "Gmail address to send alerts from"
+  type        = string
+}
+
+variable "alert_email_password" {
+  description = "Gmail app password (not your regular password — create at myaccount.google.com/apppasswords)"
+  type        = string
+  sensitive   = true
 }
