@@ -47,8 +47,8 @@ def disable_billing(event=None, context=None):
         return
 
     print(f"Threshold exceeded — disabling billing on {PROJECT_ID}")
-    _set_billing_disabled()
-    print("Billing disabled successfully")
+    # _set_billing_disabled()  # TODO: uncomment to enable hard cutoff
+    print("DRY RUN: billing would have been disabled (detachment is commented out)")
 
     _send_alert_email(cost_amount, budget_amount)
 
