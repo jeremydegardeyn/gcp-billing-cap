@@ -17,8 +17,12 @@ PROJECT_ID = os.environ["GCP_PROJECT_ID"]
 THRESHOLD_FRACTION = float(os.environ.get("THRESHOLD_FRACTION", "1.0"))
 
 ALERT_EMAIL_TO = os.environ.get("ALERT_EMAIL_TO", "")
-ALERT_EMAIL_FROM = os.environ.get("ALERT_EMAIL_FROM", "")
-ALERT_EMAIL_PASSWORD = os.environ.get("ALERT_EMAIL_PASSWORD", "")
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "")
+SMTP_PASS = os.environ.get("SMTP_PASS", "")
+SMTP_FROM_EMAIL = os.environ.get("SMTP_FROM_EMAIL", "")
+SMTP_FROM_NAME = os.environ.get("SMTP_FROM_NAME", "GCP Billing Cap")
 
 
 def disable_billing(event=None, context=None):
@@ -82,7 +86,7 @@ def _set_billing_disabled():
 
 
 def _send_alert_email(cost_amount: float, budget_amount: float):
-    if not all([ALERT_EMAIL_TO, ALERT_EMAIL_FROM, ALERT_EMAIL_PASSWORD]):
+    if not all([ALERT_EMAIL_TO, SMTP_USER, SMTP_PASS, SMTP_FROM_EMAIL]):
         print("Email env vars not set — skipping notification")
         return
 
@@ -98,14 +102,14 @@ def _send_alert_email(cost_amount: float, budget_amount: float):
 
     msg = MIMEText(body)
     msg["Subject"] = subject
-    msg["From"] = ALERT_EMAIL_FROM
+    msg["From"] = f"{SMTP_FROM_NAME} <{SMTP_FROM_EMAIL}>"
     msg["To"] = ALERT_EMAIL_TO
 
     try:
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-            server.login(ALERT_EMAIL_FROM, ALERT_EMAIL_PASSWORD)
-            server.sendmail(ALERT_EMAIL_FROM, [ALERT_EMAIL_TO], msg.as_string())
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
+            server.login(SMTP_USER, SMTP_PASS)
+            server.sendmail(SMTP_FROM_EMAIL, [ALERT_EMAIL_TO], msg.as_string())
         print(f"Alert email sent to {ALERT_EMAIL_TO}")
     except Exception as exc:
-        # Don't let email failure prevent the billing disable from being recorded
         print(f"Failed to send alert email: {exc}")

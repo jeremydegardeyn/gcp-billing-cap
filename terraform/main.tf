@@ -43,16 +43,16 @@ resource "google_project_iam_member" "billing_cap_secret_accessor" {
 
 # ── Secret Manager: Gmail app password ───────────────────────────────────────
 
-resource "google_secret_manager_secret" "gmail_password" {
-  secret_id = "billing-cap-gmail-password"
+resource "google_secret_manager_secret" "smtp_pass" {
+  secret_id = "billing-cap-smtp-pass"
   replication {
     auto {}
   }
 }
 
-resource "google_secret_manager_secret_version" "gmail_password" {
-  secret      = google_secret_manager_secret.gmail_password.id
-  secret_data = var.alert_email_password
+resource "google_secret_manager_secret_version" "smtp_pass" {
+  secret      = google_secret_manager_secret.smtp_pass.id
+  secret_data = var.smtp_pass
 }
 
 # ── Cloud Function (2nd gen) ─────────────────────────────────────────────────
@@ -97,15 +97,19 @@ resource "google_cloudfunctions2_function" "billing_cap" {
     max_instance_count    = 1
     timeout_seconds       = 60
     environment_variables = {
-      GCP_PROJECT_ID     = var.project_id
+      GCP_PROJECT_ID  = var.project_id
       THRESHOLD_FRACTION = tostring(var.threshold_fraction)
-      ALERT_EMAIL_TO     = var.alert_email_to
-      ALERT_EMAIL_FROM   = var.alert_email_from
+      ALERT_EMAIL_TO  = var.alert_email_to
+      SMTP_HOST       = var.smtp_host
+      SMTP_PORT       = tostring(var.smtp_port)
+      SMTP_USER       = var.smtp_user
+      SMTP_FROM_EMAIL = var.smtp_from_email
+      SMTP_FROM_NAME  = var.smtp_from_name
     }
     secret_environment_variables {
-      key        = "ALERT_EMAIL_PASSWORD"
+      key        = "SMTP_PASS"
       project_id = var.project_id
-      secret     = google_secret_manager_secret.gmail_password.secret_id
+      secret     = google_secret_manager_secret.smtp_pass.secret_id
       version    = "latest"
     }
   }

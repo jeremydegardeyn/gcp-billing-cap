@@ -30,13 +30,36 @@ variable "alert_email_to" {
   type        = string
 }
 
-variable "alert_email_from" {
-  description = "Gmail address to send alerts from"
+variable "smtp_host" {
+  description = "SMTP host"
+  type        = string
+  default     = "smtp.gmail.com"
+}
+
+variable "smtp_port" {
+  description = "SMTP port (STARTTLS)"
+  type        = number
+  default     = 587
+}
+
+variable "smtp_user" {
+  description = "SMTP username"
   type        = string
 }
 
-variable "alert_email_password" {
-  description = "Gmail app password (not your regular password — create at myaccount.google.com/apppasswords)"
+variable "smtp_pass" {
+  description = "SMTP password / app password"
   type        = string
   sensitive   = true
+}
+
+variable "smtp_from_email" {
+  description = "From address on alert emails"
+  type        = string
+}
+
+variable "smtp_from_name" {
+  description = "From display name on alert emails"
+  type        = string
+  default     = "DataDinosaur"
 }
