@@ -12,8 +12,10 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.region
+  project         = var.project_id
+  region          = var.region
+  billing_project = var.project_id
+  user_project_override = true
 }
 
 # ── Pub/Sub topic that the budget alert will publish to ──────────────────────
