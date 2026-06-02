@@ -80,13 +80,44 @@ terraform apply
 
 ## Dry run mode
 
-By default the billing detachment is commented out in `function/main.py` — the function will log what it *would* do and send the alert email, but won't actually kill billing. To go live, uncomment this line:
+> ⚠️ **The function is currently in dry run mode.** It will send the alert email and log what it would do, but will NOT actually detach billing.
 
-```python
-# _set_billing_disabled()  # TODO: uncomment to enable hard cutoff
+When the threshold is exceeded the logs will show:
+```
+DRY RUN: billing would have been disabled (detachment is commented out)
 ```
 
-Then redeploy by running `terraform apply` again (the function zip hash will change and trigger a redeployment).
+### Going live
+
+When you're ready to enable the hard cutoff, edit `function/main.py` and uncomment these lines:
+
+```python
+# TODO: uncomment the two lines below to enable hard cutoff
+# billing_info = _get_billing_info()
+# if not billing_info.get("billingEnabled"):
+#     print("Billing already disabled")
+#     return
+# _set_billing_disabled()
+```
+
+So it becomes:
+
+```python
+billing_info = _get_billing_info()
+if not billing_info.get("billingEnabled"):
+    print("Billing already disabled")
+    return
+_set_billing_disabled()
+```
+
+Then redeploy:
+
+```bash
+cd terraform
+terraform apply
+```
+
+The function zip hash will change automatically and trigger a redeployment.
 
 ## Configuration
 
