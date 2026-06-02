@@ -34,14 +34,18 @@ def disable_billing(event=None, context=None):
 
     cost_amount = float(data.get("costAmount", 0))
     budget_amount = float(data.get("budgetAmount", 1))
-    fraction = cost_amount / budget_amount if budget_amount else 0
+    forecast_threshold = float(data.get("forecastThresholdExceeded", 0))
+    actual_threshold = float(data.get("alertThresholdExceeded", 0))
+    triggered_threshold = max(forecast_threshold, actual_threshold)
 
     print(
         f"costAmount={cost_amount} budgetAmount={budget_amount} "
-        f"fraction={fraction:.2%} threshold={THRESHOLD_FRACTION:.2%}"
+        f"forecastThresholdExceeded={forecast_threshold} "
+        f"alertThresholdExceeded={actual_threshold} "
+        f"triggered={triggered_threshold:.2%} threshold={THRESHOLD_FRACTION:.2%}"
     )
 
-    if fraction < THRESHOLD_FRACTION:
+    if triggered_threshold < THRESHOLD_FRACTION:
         print("Under threshold — no action taken")
         return
 
