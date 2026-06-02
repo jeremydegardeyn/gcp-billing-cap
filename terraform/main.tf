@@ -143,13 +143,15 @@ resource "google_billing_budget" "cap" {
 
   threshold_rules {
     threshold_percent = 0.5
+    spend_basis       = "FORECASTED_SPEND"
   }
   threshold_rules {
     threshold_percent = 0.8
+    spend_basis       = "FORECASTED_SPEND"
   }
   threshold_rules {
     threshold_percent = 1.0
-    spend_basis       = "CURRENT_SPEND"
+    spend_basis       = "FORECASTED_SPEND"
   }
 
   all_updates_rule {
