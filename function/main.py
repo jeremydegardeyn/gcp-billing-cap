@@ -94,11 +94,11 @@ def _send_alert_email(cost_amount: float, budget_amount: float):
         print("Email env vars not set — skipping notification")
         return
 
-    subject = f"[GCP BILLING DISABLED] {PROJECT_ID} exceeded ${budget_amount:.2f} budget"
+    subject = f"[GCP BILLING DISABLED] {PROJECT_ID} exceeded ${budget_amount:.2f} forecasted budget"
     body = (
         f"GCP billing has been automatically disabled for project: {PROJECT_ID}\n\n"
-        f"Spend:  ${cost_amount:.2f}\n"
-        f"Budget: ${budget_amount:.2f}\n\n"
+        f"Actual spend:      ${cost_amount:.2f}\n"
+        f"Forecasted budget: ${budget_amount:.2f}\n\n"
         f"All GCP services on this project are now stopped.\n"
         f"To restore service, re-attach the billing account in the GCP console:\n"
         f"https://console.cloud.google.com/billing/projects\n"
